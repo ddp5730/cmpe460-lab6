@@ -9,6 +9,7 @@
  */
 #include "MK64F12.h"
 #include "pwm.h"
+#include "uart.h"
 
 /*From clock setup 0 in system_MK64f12.c*/
 #define DEFAULT_SYSTEM_CLOCK    20485760u 

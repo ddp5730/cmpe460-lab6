@@ -14,19 +14,20 @@ void delay(int del);
 
 int main(void) {
 	// Initialize UART and PWM
-	// INSERT CODE HERE
+	FTM0_init();
+	uart_init();
 
 	// Print welcome over serial
-	put("Running... \n\r");
+	uart_put("Running... \n\r");
 	
 	/* Part 1 - UNCOMMENT THIS
 	// Generate 20% duty cycle at 10kHz
-	// INSERT CODE HERE
+	FTM0_set_duty_cycle(60, 10000, 0);
 	
 	for(;;) ;  //then loop forever
 	*/
 	
-	/* Part 2 - UNCOMMENT THIS
+	// Part 2 - UNCOMMENT THIS
 	for(;;)  //loop forever
 	{
 		uint16_t dc = 0;
@@ -37,34 +38,36 @@ int main(void) {
 		
 		// 0 to 100% duty cycle in forward direction
 		for (i=0; i<100; i++) {
-		    // INSERT CODE HERE
+		    FTM0_set_duty_cycle(i, freq, dir);
 			
 			delay(10);
 		}
 		
 		// 100% down to 0% duty cycle in the forward direction
 		for (i=100; i>=0; i--) {
-		    // INSERT CODE HERE
+		    FTM0_set_duty_cycle(i, freq, dir);
 			
 			delay(10);
 		}
 		
+		dir = !dir;
+		
 		// 0 to 100% duty cycle in reverse direction
 		for (i=0; i<100; i++) {
-		    // INSERT CODE HERE
+		    FTM0_set_duty_cycle(i, freq, dir);
 			
 			delay(10);
 		}
 		
 		// 100% down to 0% duty cycle in the reverse direction
 		for (i=100; i>=0; i--) {
-		    // INSERT CODE HERE
+		    FTM0_set_duty_cycle(i, freq, dir);
 			
 			delay(10);
 		}
 
 	}
-	*/
+
 	return 0;
 }
 
