@@ -11,8 +11,8 @@
 #include "uart.h"
 #define BAUD_RATE 9600      //default baud rate 
 #define SYS_CLOCK 20485760 //default system clock (see DEFAULT_SYSTEM_CLOCK  in system_MK64F12.c)
-#define RXB_SIZE 64
-#define TXB_SIZE 64
+#define RXB_SIZE 100
+#define TXB_SIZE 200
 
 char rx_buf[RXB_SIZE];
 char tx_buf[TXB_SIZE];
@@ -69,17 +69,16 @@ void uart_init()
 	UART0_C4 |= UART_C4_BRFA(brfa);
 		
 	//Enable transmitter and receiver of UART
-	UART0_C2 |= UART_C2_TE_MASK | UART_C2_RE_MASK | UART_C2_TIE_MASK | UART_C2_RIE_MASK;
+	UART0_C2 |= UART_C2_TE_MASK | UART_C2_RE_MASK | UART_C2_RIE_MASK; // Enable Rx interrupts only
 	
 	NVIC_EnableIRQ(UART0_RX_TX_IRQn);
 }
 
 int uart0_put(char *str)
 {
-	int i = (int)str;
-	while(*str != 0) 
+	while(*str != '\0') 
 	{
-		if(uart0_putchar(*(str++))) return (int)str - i;
+		if(uart0_putchar(*(str++))) return 1;
 	}
 	return 0;
 }
@@ -107,12 +106,18 @@ int uart0_getchar(char *c)
 
 void UART0_RX_TX_IRQHandler()
 {
-	if(UART0_S1 & UART_S1_TDRE_MASK)
+	// Check TIE and TDRE bit
+	if((UART0_C2 & UART_C2_TIE_MASK) && (UART0_S1 & UART_S1_TDRE_MASK))
 	{
-		if(deQ(&txQ, &UART0_D)) UART0_C2 &= ~UART_C2_TIE_MASK;
+		if(!deQ(&txQ, &UART0_D)) {
+		  // Continually dequeue until queue is empty.  Then disable TX interrupt
+			UART0_C2 &= ~UART_C2_TIE_MASK;
+		}
 	}
+	
 	if(UART0_S1 & UART_S1_RDRF_MASK)
 	{
-		if(enQ(&rxQ, UART0_D)) UART0_C2 &= ~UART_C2_RIE_MASK;
+		// If RDRF set then enqueue character to RX queue
+		enQ(&rxQ, UART0_D);
 	}
 }
