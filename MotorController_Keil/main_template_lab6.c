@@ -79,7 +79,7 @@ int main(void) {
 	// Part 3
 	init_GPIO();
 	
-	int forward = 1;
+	int forward = 0;
 	int phase = 0;
 	
 	while(1) {

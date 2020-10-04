@@ -14,6 +14,7 @@
 /*From clock setup 0 in system_MK64f12.c*/
 #define DEFAULT_SYSTEM_CLOCK    20485760u 
 #define FTM0_MOD_VALUE          (DEFAULT_SYSTEM_CLOCK/10000)
+#define FTM2_MOD_VALUE					(DEFAULT_SYSTEM_CLOCK/50)
 
 
 /*
@@ -85,4 +86,45 @@ void FTM0_init()
 	// Chose system clock source
 	// Timer Overflow Interrupt Enable
 	FTM0_SC = FTM_SC_PS(0) | FTM_SC_CLKS(1); 
+}
+
+/*
+ * Initialize the FlexTimer for PWM
+ */
+void FTM2_init()
+{
+	// 12.2.13 Enable the clock to the FTM0 Module
+	SIM_SCGC3 |= SIM_SCGC3_FTM2_MASK;
+	SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+	
+	// Enable clock on PORT B so it can output the PWM signals
+	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
+	
+	// 11.4.1 Route the output of FTM channel 0 to the pins
+	// Use drive strength enable flag to high drive strength
+    PORTB_PCR18 = PORT_PCR_MUX(3) | PORT_PCR_DSE_MASK; //Ch2
+	
+	// 39.3.10 Disable Write Protection
+	FTM2_MODE |= FTM_MODE_WPDIS_MASK;
+	
+	// 39.3.4 FTM Counter Value
+	// Initialize the CNT to 0 before writing to MOD
+	FTM2_CNT = 0;
+	
+	// 39.3.8 Set the Counter Initial Value to 0
+	FTM2_CNTIN = 0;
+	
+	// 39.3.5 Set the Modulo resister
+	FTM2_MOD = FTM2_MOD_VALUE;
+
+	// 39.3.6 Set the Status and Control of both channels
+	// Used to configure mode, edge and level selection
+	// See Table 39-67,  Edge-aligned PWM, High-true pulses (clear out on match)
+	FTM2_C0SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
+	
+	// 39.3.3 FTM Setup
+	// Set prescale value to 1 
+	// Chose system clock source
+	// Timer Overflow Interrupt Enable
+	FTM2_SC = FTM_SC_PS(0) | FTM_SC_CLKS(1); 
 }
