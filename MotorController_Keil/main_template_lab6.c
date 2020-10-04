@@ -6,161 +6,122 @@
  * Modified: Carson Clarke-Magrab <ctc7359@rit.edu> 
  */
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "MK64F12.h"
 #include "uart.h"
 #include "PWM.h"
 
-#define COIL_A_PIN 0
-#define COIL_B_PIN 1
-#define COIL_C_PIN 2
-#define COIL_D_PIN 3
+#define BUF_SIZE 100
 
 void delay(int del);
 void init_GPIO(void);
 void set_coil_states(int on, int off1, int off2, int off3);
+void get_user_string(char* buffer, int max_size);
 
 int main(void) {
 	// Initialize UART and PWM
 	FTM0_init();
+	FTM2_init();
 	uart_init();
 
 	// Print welcome over serial
-	uart_put("Running... \n\r");
+	uart0_put("\r\n\nRunning... \n\r");
 	
-	/* Part 1 - UNCOMMENT THIS
-	// Generate 20% duty cycle at 10kHz
-	FTM0_set_duty_cycle(60, 10000, 0);
-	
-	for(;;) ;  //then loop forever
-	*/
-	
-	/*
-	// Part 2 - UNCOMMENT THIS
-	for(;;)  //loop forever
-	{
-		uint16_t dc = 0;
-		uint16_t freq = 10000; // Frequency = 10 kHz 
-		uint16_t dir = 0;
-		char c = 48;
-		int i=0;
-		
-		// 0 to 100% duty cycle in forward direction
-		for (i=0; i<100; i++) {
-		    FTM0_set_duty_cycle(i, freq, dir);
-			
-			delay(10);
-		}
-		
-		// 100% down to 0% duty cycle in the forward direction
-		for (i=100; i>=0; i--) {
-		    FTM0_set_duty_cycle(i, freq, dir);
-			
-			delay(10);
-		}
-		
-		dir = !dir;
-		
-		// 0 to 100% duty cycle in reverse direction
-		for (i=0; i<100; i++) {
-		    FTM0_set_duty_cycle(i, freq, dir);
-			
-			delay(10);
-		}
-		
-		// 100% down to 0% duty cycle in the reverse direction
-		for (i=100; i>=0; i--) {
-		    FTM0_set_duty_cycle(i, freq, dir);
-			
-			delay(10);
-		}
-
-	} */
-	
-	// Part 3
-	init_GPIO();
-	
-	int forward = 0;
-	int phase = 0;
-	
+	char buf[BUF_SIZE];
 	while(1) {
-			// Turn off all coils; set GPIO pins to 0
-			GPIOD_PCOR = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3);
 		
-		// Set one pin high ata  time
-		if (forward) {
-			if (phase == 0) {
-				// Turn on coil A
-				set_coil_states(COIL_A_PIN, COIL_B_PIN, COIL_C_PIN, COIL_D_PIN);
-				phase++;
-			}
-			else if (phase == 1) {
-				// Turn on coil B
-				set_coil_states(COIL_B_PIN, COIL_A_PIN, COIL_C_PIN, COIL_D_PIN);
-				phase++;
-			}
-			else if (phase ==2) {
-				// Turn on coil C
-				set_coil_states(COIL_C_PIN, COIL_A_PIN, COIL_B_PIN, COIL_D_PIN);
-				phase++;
+		
+		uart0_put("Please choose a motor to control\r\n");
+		uart0_put("'s' servo\r\n'd' DC Motor\r\n'o' all off\r\n");
+		uart0_put("> ");
+		
+		get_user_string(buf, BUF_SIZE);
+		
+		if (!strncmp(buf, "s", BUF_SIZE - 1)) {
+			uart0_put("Servo\r\n");
+			uart0_put("Please enter duty cycle: ");
+			get_user_string(buf, BUF_SIZE);
+			int duty_cycle = atoi(buf);
+			
+			uart0_put("Please enter frequency: ");
+			get_user_string(buf, BUF_SIZE);
+			int frequency = atoi(buf);
+			
+			int is_valid_duty = (duty_cycle >= 0 && duty_cycle <= 100);
+			int is_valid_freq = (frequency >= 0 && frequency <= 50000);
+			
+			if (is_valid_duty && is_valid_freq) {
+				sprintf(buf, "Setting Servo to duty cycle: %d, and frequency: %d", duty_cycle, frequency);
+				uart0_put(buf);
+				FTM2_set_duty_cycle(duty_cycle, frequency);
 			}
 			else {
-				// Turn on coil D
-				set_coil_states(COIL_D_PIN, COIL_A_PIN, COIL_B_PIN, COIL_C_PIN);
-				phase = 0;
+				uart0_put("Invalid values");
 			}
+			uart0_put("\r\n");
+		}
+		else if (!strncmp(buf, "d", BUF_SIZE - 1)) {
+			uart0_put("DC Motor\r\n");
+			uart0_put("Servo\r\n");
+			
+			uart0_put("Please enter duty cycle: ");
+			get_user_string(buf, BUF_SIZE);
+			int duty_cycle = atoi(buf);
+			
+			uart0_put("Please enter frequency: ");
+			get_user_string(buf, BUF_SIZE);
+			int frequency = atoi(buf);
+			
+			uart0_put("Please enter a direction (1) forwards (0) backwards: ");
+			get_user_string(buf, BUF_SIZE);
+			int direction = atoi(buf);
+			
+			int is_valid_duty = (duty_cycle >= 0 && duty_cycle <= 100);
+			int is_valid_freq = (frequency >= 0 && frequency <= 50000);
+			int is_valid_dir = (direction >= 0 && direction <= 1);
+			
+			if (is_valid_duty && is_valid_freq && is_valid_dir) {
+				sprintf(buf, "Setting DC Motors to duty cycle: %d, frequency: %d, and direction: %d", duty_cycle, frequency, direction);
+				uart0_put(buf);
+				FTM0_set_duty_cycle(duty_cycle, frequency, direction);
+			}
+			else {
+				uart0_put("Invalid values");
+			}
+			uart0_put("\r\n");
+		}
+		else if (!strncmp(buf, "o", BUF_SIZE - 1)) {
+			uart0_put("Turning all motors OFF\r\n\n");
+			FTM0_set_duty_cycle(0, 10000, 0);
+			FTM2_set_duty_cycle(0, 50);
 		}
 		else {
-			// Reverse
-			if (phase == 0) {
-				// Turn on coil D
-				set_coil_states(COIL_D_PIN, COIL_A_PIN, COIL_B_PIN, COIL_C_PIN);
-				phase++;
-			}
-			else if (phase == 1) {
-				// Turn on coil C
-				set_coil_states(COIL_C_PIN, COIL_A_PIN, COIL_B_PIN, COIL_D_PIN);
-				phase++;
-			}
-			else if (phase ==2) {
-				// Turn on coil B
-				set_coil_states(COIL_B_PIN, COIL_A_PIN, COIL_C_PIN, COIL_D_PIN);
-				phase++;
-			}
-			else {
-				// Turn on coil A
-				set_coil_states(COIL_A_PIN, COIL_B_PIN, COIL_C_PIN, COIL_D_PIN);
-				phase = 0;
-			}
+			uart0_put("INVALID INPUT\r\n");
 		}
 		
-		delay(10);
-		
-	}	
+	}
 
 	return 0;
 }
 
-void init_GPIO() {
-	// Enable clocks to port D
-	SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
-	
-	// Configure Signal Mux
-  PORTD_PCR0 |= PORT_PCR_MUX(1);
-	PORTD_PCR1 |= PORT_PCR_MUX(1);
-	PORTD_PCR2 |= PORT_PCR_MUX(1);
-	PORTD_PCR3 |= PORT_PCR_MUX(1);
-	
-	// Configure GPIO pins for output
-	GPIOD_PDDR |= (1 << COIL_A_PIN);
-	GPIOD_PDDR |= (1 << COIL_B_PIN);
-	GPIOD_PDDR |= (1 << COIL_C_PIN);
-	GPIOD_PDDR |= (1 << COIL_D_PIN);
-	
-}
-
-void set_coil_states(int on, int off1, int off2, int off3) {
-	GPIOD_PSOR = (1 << on);
-	GPIOD_PCOR = (1 << off1) | (1 << off2) | (1 << off3);
+void get_user_string(char* buffer, int max_size) {
+	char c;
+	for (int i = 0; i < max_size;) {
+		if (!uart0_getchar(&c)) {
+			if (i != max_size - 2 && (c != '\r')) {
+				uart0_putchar(c);
+				buffer[i++] = c;
+			}
+			if (c == '\r') {
+				uart0_put("\r\n");
+				buffer[i]='\0';
+				i = 0;
+				return;
+			}
+		}
+	}
 }
 
 
