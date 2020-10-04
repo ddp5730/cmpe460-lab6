@@ -109,7 +109,7 @@ void UART0_RX_TX_IRQHandler()
 	// Check TIE and TDRE bit
 	if((UART0_C2 & UART_C2_TIE_MASK) && (UART0_S1 & UART_S1_TDRE_MASK))
 	{
-		if(!deQ(&txQ, &UART0_D)) {
+		if(deQ(&txQ, &UART0_D)) {
 		  // Continually dequeue until queue is empty.  Then disable TX interrupt
 			UART0_C2 &= ~UART_C2_TIE_MASK;
 		}
