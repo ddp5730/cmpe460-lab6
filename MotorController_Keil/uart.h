@@ -9,4 +9,9 @@ int uart0_getchar(char* c);
 int uart0_put(char* c);
 int uart0_get(char **str, int n);
 
+int uart3_putchar(char c);
+int uart3_getchar(char* c);
+int uart3_put(char* c);
+int uart3_get(char **str, int n);
+
 #endif
