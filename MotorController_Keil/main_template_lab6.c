@@ -24,6 +24,7 @@ int main(void) {
 	// Initialize UART and PWM
 	FTM0_init();
 	FTM2_init();
+	init_GPIO();
 	uart_init();
 
 	// Print welcome over serial
@@ -124,6 +125,17 @@ void get_user_string(char* buffer, int max_size) {
 	}
 }
 
+void init_GPIO(void) {
+	// Enable GPIO pins for motor controller HW enable
+	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
+	PORTB_PCR2 |= PORT_PCR_MUX(1);
+	PORTB_PCR3 |= PORT_PCR_MUX(1);
+	GPIOB_PDDR = (1 << 2) | (1 << 3);
+	
+	// Set to high
+	GPIOB_PSOR = (1 << 2) | (1 << 3);
+	
+}
 
 /**
  * Waits for a delay (in milliseconds)

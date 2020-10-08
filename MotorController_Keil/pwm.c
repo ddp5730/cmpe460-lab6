@@ -33,10 +33,14 @@ void FTM0_set_duty_cycle(unsigned int duty_cycle, unsigned int frequency, int di
 	// Set outputs 
 	if(dir) {
 	    FTM0_C3V = mod; 
+			FTM0_C1V = mod;
 	    FTM0_C2V = 0;
+			FTM0_C0V = 0;
 	} else {
 	    FTM0_C2V = mod; 
+			FTM0_C0V = mod;
 	    FTM0_C3V = 0;
+			FTM0_C1V = 0;
 	}
 
 	// Update the clock to the new frequency
@@ -68,7 +72,9 @@ void FTM0_init()
 	
 	// 11.4.1 Route the output of FTM channel 0 to the pins
 	// Use drive strength enable flag to high drive strength
-    PORTC_PCR3 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch2
+    PORTC_PCR1 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch2
+    PORTC_PCR2 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch3
+		PORTC_PCR3 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch2
     PORTC_PCR4 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch3
 	
 	// 39.3.10 Disable Write Protection
@@ -89,10 +95,14 @@ void FTM0_init()
 	// See Table 39-67,  Edge-aligned PWM, High-true pulses (clear out on match)
 	FTM0_C3SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
 	FTM0_C3SC &= ~FTM_CnSC_ELSA_MASK;
+	FTM0_C1SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
+	FTM0_C1SC &= ~FTM_CnSC_ELSA_MASK;
 	
 	// See Table 39-67,  Edge-aligned PWM, Low-true pulses (clear out on match)
 	FTM0_C2SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
 	FTM0_C2SC &= ~FTM_CnSC_ELSA_MASK;
+	FTM0_C0SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
+	FTM0_C0SC &= ~FTM_CnSC_ELSA_MASK;
 	
 	// 39.3.3 FTM Setup
 	// Set prescale value to 1 
