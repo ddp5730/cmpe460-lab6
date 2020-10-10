@@ -23,7 +23,7 @@ void get_user_string(char* buffer, int max_size);
 int main(void) {
 	// Initialize UART and PWM
 	FTM0_init();
-	FTM2_init();
+	FTM3_init();
 	init_GPIO();
 	uart_init();
 
@@ -56,7 +56,7 @@ int main(void) {
 			if (is_valid_duty && is_valid_freq) {
 				sprintf(buf, "Setting Servo to duty cycle: %d, and frequency: %d", duty_cycle, frequency);
 				uart3_put(buf);
-				FTM2_set_duty_cycle(duty_cycle, frequency);
+				FTM3_set_duty_cycle(duty_cycle, frequency);
 			}
 			else {
 				uart3_put("Invalid values");
@@ -96,7 +96,7 @@ int main(void) {
 		else if (!strncmp(buf, "o", BUF_SIZE - 1)) {
 			uart3_put("Turning all motors OFF\r\n\n");
 			FTM0_set_duty_cycle(0, 10000, 0);
-			FTM2_set_duty_cycle(0, 50);
+			FTM3_set_duty_cycle(0, 50);
 		}
 		else {
 			uart3_put("INVALID INPUT\r\n");
