@@ -1,19 +1,17 @@
-/*
- * File:        uart.h
- * Purpose:     Header file for uart.c
- *
- * Notes:		
- *
- */
- 
-#ifndef UART
-#define UART
+#ifndef __UART_H
+#define __UART_H
+
+#include "MK64F12.h"
 
 void uart_init(void);
+int uart0_putchar(char c);
+int uart0_getchar(char* c);
+int uart0_put(char* c);
+int uart0_get(char **str, int n);
 
-void uart_put(char *ptr_str);
-uint8_t uart_getchar(void);
-void uart_putchar(char ch);
- 
- 
+int uart3_putchar(char c);
+int uart3_getchar(char* c);
+int uart3_put(char* c);
+int uart3_get(char **str, int n);
+
 #endif

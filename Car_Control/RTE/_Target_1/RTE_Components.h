@@ -3,7 +3,7 @@
  * Auto generated Run-Time-Environment Component Configuration File
  *      *** Do not modify ! ***
  *
- * Project: 'MotorController' 
+ * Project: 'Car_Control' 
  * Target:  'Target 1' 
  */
 

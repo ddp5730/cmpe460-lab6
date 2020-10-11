@@ -13,9 +13,8 @@
 
 /*From clock setup 0 in system_MK64f12.c*/
 #define DEFAULT_SYSTEM_CLOCK    20485760u 
-#define FTM3_PS 16
 #define FTM0_MOD_VALUE          (DEFAULT_SYSTEM_CLOCK/10000)
-#define FTM3_MOD_VALUE					(DEFAULT_SYSTEM_CLOCK/(double)(50 * FTM3_PS))
+#define FTM2_MOD_VALUE					(DEFAULT_SYSTEM_CLOCK/50)
 
 
 /*
@@ -33,30 +32,14 @@ void FTM0_set_duty_cycle(unsigned int duty_cycle, unsigned int frequency, int di
 	// Set outputs 
 	if(dir) {
 	    FTM0_C3V = mod; 
-			FTM0_C1V = mod;
 	    FTM0_C2V = 0;
-			FTM0_C0V = 0;
 	} else {
 	    FTM0_C2V = mod; 
-			FTM0_C0V = mod;
 	    FTM0_C3V = 0;
-			FTM0_C1V = 0;
 	}
 
 	// Update the clock to the new frequency
 	FTM0_MOD = (DEFAULT_SYSTEM_CLOCK / frequency);
-}
-
-void FTM3_set_duty_cycle(unsigned int duty_cycle, unsigned int frequency)
-{
-	// Calculate the new cutoff value
-	uint16_t mod = (uint16_t) (((DEFAULT_SYSTEM_CLOCK / (double)(FTM3_PS * frequency)) * duty_cycle) / 100);
-  
-	// Set outputs 
-	    FTM3_C4V = mod; 
-
-	// Update the clock to the new frequency
-	FTM3_MOD = (DEFAULT_SYSTEM_CLOCK / (double)(FTM3_PS * frequency));
 }
 
 /*
@@ -72,9 +55,7 @@ void FTM0_init()
 	
 	// 11.4.1 Route the output of FTM channel 0 to the pins
 	// Use drive strength enable flag to high drive strength
-    PORTC_PCR1 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch2
-    PORTC_PCR2 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch3
-		PORTC_PCR3 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch2
+    PORTC_PCR3 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch2
     PORTC_PCR4 = PORT_PCR_MUX(4) | PORT_PCR_DSE_MASK; //Ch3
 	
 	// 39.3.10 Disable Write Protection
@@ -95,14 +76,10 @@ void FTM0_init()
 	// See Table 39-67,  Edge-aligned PWM, High-true pulses (clear out on match)
 	FTM0_C3SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
 	FTM0_C3SC &= ~FTM_CnSC_ELSA_MASK;
-	FTM0_C1SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
-	FTM0_C1SC &= ~FTM_CnSC_ELSA_MASK;
 	
 	// See Table 39-67,  Edge-aligned PWM, Low-true pulses (clear out on match)
 	FTM0_C2SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
 	FTM0_C2SC &= ~FTM_CnSC_ELSA_MASK;
-	FTM0_C0SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
-	FTM0_C0SC &= ~FTM_CnSC_ELSA_MASK;
 	
 	// 39.3.3 FTM Setup
 	// Set prescale value to 1 
@@ -114,40 +91,40 @@ void FTM0_init()
 /*
  * Initialize the FlexTimer for PWM
  */
-void FTM3_init()
+void FTM2_init()
 {
 	// 12.2.13 Enable the clock to the FTM0 Module
-	SIM_SCGC3 |= SIM_SCGC3_FTM3_MASK;
+	SIM_SCGC3 |= SIM_SCGC3_FTM2_MASK;
+	SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
 	
-	// Enable clock on PORT C so it can output the PWM signals
-	SIM_SCGC5 |= SIM_SCGC5_PORTC_MASK;
+	// Enable clock on PORT B so it can output the PWM signals
+	SIM_SCGC5 |= SIM_SCGC5_PORTB_MASK;
 	
 	// 11.4.1 Route the output of FTM channel 0 to the pins
 	// Use drive strength enable flag to high drive strength
-   PORTC_PCR8 = PORT_PCR_MUX(3) | PORT_PCR_DSE_MASK; //Ch2
+    PORTB_PCR18 = PORT_PCR_MUX(3) | PORT_PCR_DSE_MASK; //Ch2
 	
 	// 39.3.10 Disable Write Protection
-	FTM3_MODE |= FTM_MODE_WPDIS_MASK;
+	FTM2_MODE |= FTM_MODE_WPDIS_MASK;
 	
 	// 39.3.4 FTM Counter Value
 	// Initialize the CNT to 0 before writing to MOD
-	FTM3_CNT = 0;
+	FTM2_CNT = 0;
 	
 	// 39.3.8 Set the Counter Initial Value to 0
-	FTM3_CNTIN = 0;
+	FTM2_CNTIN = 0;
 	
 	// 39.3.5 Set the Modulo resister
-	FTM3_MOD = FTM3_MOD_VALUE;
+	FTM2_MOD = FTM2_MOD_VALUE;
 
 	// 39.3.6 Set the Status and Control of both channels
 	// Used to configure mode, edge and level selection
 	// See Table 39-67,  Edge-aligned PWM, High-true pulses (clear out on match)
-	FTM3_C4SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
-	FTM3_C4SC &= ~FTM_CnSC_ELSA_MASK;
+	FTM2_C0SC |= FTM_CnSC_MSB_MASK | FTM_CnSC_ELSB_MASK;
 	
 	// 39.3.3 FTM Setup
 	// Set prescale value to 1 
 	// Chose system clock source
 	// Timer Overflow Interrupt Enable
-	FTM3_SC = FTM_SC_PS(4) | FTM_SC_CLKS(1); // PS = 16 
+	FTM2_SC = FTM_SC_PS(0) | FTM_SC_CLKS(1); 
 }
